@@ -20,8 +20,22 @@ public class Solver {
 	public Solver(String gameName, State initState) {
 		this.gameName = gameName;
 		scoreMap = new HashMap<>();
+		loadFromFile();
 		solve(initState);
 		saveTofile();
+	}
+
+	private void loadFromFile() {
+		System.out.println("Loading from file...");
+		long startTime = System.currentTimeMillis();
+		try {
+			FileHandler.load(gameName, scoreMap);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println(
+				"Loaded " + scoreMap.size() + " items, cost " + (System.currentTimeMillis() - startTime) + "ms");
 	}
 
 	public double score(State state) {
@@ -91,6 +105,8 @@ public class Solver {
 	private void saveTofile() {
 		if (storageBuffer == null || storageBuffer.isEmpty())
 			return;
+		System.out.println("Storing from file...");
+		long startTime = System.currentTimeMillis();
 		try {
 			FileHandler.save(gameName, storageBuffer);
 		} catch (IOException e) {
@@ -100,6 +116,8 @@ public class Solver {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		System.out.println(
+				"Stored " + storageBuffer.size() + " items, cost " + (System.currentTimeMillis() - startTime) + "ms");
 		storageBuffer = null;
 	}
 
