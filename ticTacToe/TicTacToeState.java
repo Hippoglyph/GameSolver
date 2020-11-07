@@ -3,7 +3,7 @@ package ticTacToe;
 import java.util.ArrayList;
 import java.util.List;
 
-import design.Board.CellState;
+import game.Board.CellState;
 import solver.State;
 
 public class TicTacToeState extends State {

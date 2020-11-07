@@ -1,4 +1,4 @@
-package design;
+package game;
 
 import java.awt.Frame;
 import java.awt.event.WindowAdapter;

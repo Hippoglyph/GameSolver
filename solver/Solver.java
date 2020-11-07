@@ -15,7 +15,10 @@ public class Solver {
 	public Solver(State initState) {
 		scoreMap = new HashMap<>();
 		solve(initState);
-		System.out.println(scoreMap.get(initState.getEncodedState()));
+	}
+
+	public double score(State state) {
+		return scoreMap.get(state.getEncodedState());
 	}
 
 	public State getBestState(State state) {
@@ -39,7 +42,6 @@ public class Solver {
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + state.nextTurn());
 		}
-
 	}
 
 	private void solve(State state) {

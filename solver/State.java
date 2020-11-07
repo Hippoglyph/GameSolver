@@ -2,7 +2,7 @@ package solver;
 
 import java.util.List;
 
-import design.Board.CellState;
+import game.Board.CellState;
 
 public abstract class State {
 

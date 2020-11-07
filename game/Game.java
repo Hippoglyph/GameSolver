@@ -1,9 +1,8 @@
-package ticTacToe;
+package game;
 
-import design.Board;
-import design.Design;
 import solver.Solver;
 import solver.State;
+import solver.State.VictoryState;
 
 public class Game {
 	private final State initState;
@@ -11,19 +10,21 @@ public class Game {
 	private State state;
 	private Solver solver;
 
-	public Game(boolean start) {
-		initState = new TicTacToeState(0);
+	public Game(String name, boolean start, State initState, int boardWidth, int boardHeight) {
+		this.initState = initState;
 		solver = new Solver(initState);
-		if (start)
-			state = initState;
-		else
-			state = solver.getBestState(initState);
-		board = new Design("Tick Tac Toe", 450, 450, initState.colSize(), initState.rowSize()).getBoard();
+		state = start ? initState : solver.getBestState(initState);
+		board = new Design(name, boardWidth, boardHeight, initState.colSize(), initState.rowSize()).getBoard();
 		board.draw(state);
 		board.registerGridLocationListener(this::playerClicked);
 	}
 
 	private void playerClicked(int row, int col) {
+		if (state.getVictoryState() != VictoryState.UNDECIDED) {
+			state = initState;
+			board.draw(state);
+			return;
+		}
 		State newState = state.getNextState(row, col);
 		state = newState == null ? state : newState;
 		newState = solver.getBestState(state);
