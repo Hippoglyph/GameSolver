@@ -1,10 +1,10 @@
-package TicTacToe;
+package ticTacToe;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import Design.Board.CellState;
-import Solver.State;
+import solver.State;
+import design.Board.CellState;
 
 public class TicTacToeState extends State {
 
@@ -16,11 +16,10 @@ public class TicTacToeState extends State {
 	public static final int colSize = 3;
 	private int[][] state = null;
 
+	private Turn nextTurn;
+
 	public TicTacToeState(long encodedState) {
 		super(encodedState);
-
-		// System.out.println(String.format("%d -> %d", encodedState,
-		// getEncodedState(state)));
 	}
 
 	private int[][] getState() {
@@ -174,24 +173,7 @@ public class TicTacToeState extends State {
 		if (getVictoryState() != VictoryState.UNDECIDED)
 			return states;
 
-		int circleCount = 0;
-		int crossCount = 0;
-		for (int r = 0; r < rowSize(); r++) {
-			for (int c = 0; c < colSize(); c++) {
-				switch (getCellState(r, c)) {
-				case PLAYER2:
-					circleCount++;
-					break;
-				case PLAYER1:
-					crossCount++;
-					break;
-				default:
-					break;
-				}
-			}
-		}
-
-		int piece = crossCount > circleCount ? CIRCLE : CROSS;
+		int piece = nextTurn() == Turn.PLAYER1 ? CROSS : CIRCLE;
 
 		for (int r = 0; r < rowSize(); r++) {
 			for (int c = 0; c < colSize(); c++) {
@@ -215,5 +197,40 @@ public class TicTacToeState extends State {
 			}
 		}
 		return newGridState;
+	}
+
+	public State getNextState(int r, int c) {
+		if (getCellState(r, c) != CellState.EMPTY)
+			return null;
+		List<State> nextStates = getAllNextStates();
+		for (State state : nextStates) {
+			if (state.getCellState(r, c) != CellState.EMPTY)
+				return state;
+		}
+		return null;
+	}
+
+	@Override
+	public Turn nextTurn() {
+		if (nextTurn == null) {
+			int circleCount = 0;
+			int crossCount = 0;
+			for (int r = 0; r < rowSize(); r++) {
+				for (int c = 0; c < colSize(); c++) {
+					switch (getCellState(r, c)) {
+					case PLAYER2:
+						circleCount++;
+						break;
+					case PLAYER1:
+						crossCount++;
+						break;
+					default:
+						break;
+					}
+				}
+			}
+			nextTurn = crossCount > circleCount ? Turn.PLAYER1 : Turn.PLAYER2;
+		}
+		return nextTurn;
 	}
 }

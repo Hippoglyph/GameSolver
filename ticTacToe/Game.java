@@ -1,11 +1,10 @@
-package TicTacToe;
+package ticTacToe;
 
-import java.util.List;
 import java.util.Random;
 
-import Design.Board;
-import Design.Design;
-import Solver.State;
+import solver.State;
+import design.Board;
+import design.Design;
 
 public class Game {
 	private final State initState;
@@ -23,8 +22,8 @@ public class Game {
 	}
 
 	private void playerClicked(int row, int col) {
-		List<State> newStates = state.getAllNextStates();
-		state = newStates.isEmpty() ? initState : newStates.get(rng.nextInt(newStates.size()));
+		State newState = state.getNextState(row, col);
+		state = newState == null ? state : newState;
 		board.draw(state);
 	}
 }

@@ -1,4 +1,4 @@
-package Design;
+package design;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -12,7 +12,7 @@ import java.util.List;
 
 import javax.swing.JPanel;
 
-import Solver.State;
+import solver.State;
 
 public class Board extends JPanel {
 	private static final long serialVersionUID = 1L;
