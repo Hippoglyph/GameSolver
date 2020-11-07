@@ -120,10 +120,10 @@ public class Board extends JPanel {
 			cellState = CellState.EMPTY;
 
 		switch (cellState) {
-		case PLAYER1:
+		case PLAYER2:
 			g.drawOval(xCenter - colPlayerOffset, yCenter - rowPlayerOffset, colPlayerOffset * 2, rowPlayerOffset * 2);
 			break;
-		case PLAYER2:
+		case PLAYER1:
 			g.drawLine(xCenter + colPlayerOffset, yCenter - rowPlayerOffset, xCenter - colPlayerOffset,
 					yCenter + rowPlayerOffset);
 			g.drawLine(xCenter - colPlayerOffset, yCenter - rowPlayerOffset, xCenter + colPlayerOffset,
