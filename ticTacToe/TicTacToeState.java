@@ -3,8 +3,8 @@ package ticTacToe;
 import java.util.ArrayList;
 import java.util.List;
 
-import solver.State;
 import design.Board.CellState;
+import solver.State;
 
 public class TicTacToeState extends State {
 
@@ -229,7 +229,7 @@ public class TicTacToeState extends State {
 					}
 				}
 			}
-			nextTurn = crossCount > circleCount ? Turn.PLAYER1 : Turn.PLAYER2;
+			nextTurn = crossCount > circleCount ? Turn.PLAYER2 : Turn.PLAYER1;
 		}
 		return nextTurn;
 	}

@@ -14,7 +14,7 @@ public abstract class State {
 		PLAYER1, PLAYER2
 	}
 
-	public final long encodedState;
+	protected final long encodedState;
 
 	public State(long encodedState) {
 		this.encodedState = encodedState;
