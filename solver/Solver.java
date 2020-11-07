@@ -1,5 +1,8 @@
 package solver;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -9,12 +12,16 @@ import java.util.stream.Collectors;
 public class Solver {
 
 	private Map<Long, Double> scoreMap;
-
+	private List<String> storageBuffer;
 	private static final double decay = 0.99;
+	private static final int bufferLimit = 20000;
+	private final String gameName;
 
-	public Solver(State initState) {
+	public Solver(String gameName, State initState) {
+		this.gameName = gameName;
 		scoreMap = new HashMap<>();
 		solve(initState);
+		saveTofile();
 	}
 
 	public double score(State state) {
@@ -51,7 +58,7 @@ public class Solver {
 		List<State> nextStates = state.getAllNextStates();
 
 		if (nextStates.isEmpty()) {
-			scoreMap.put(state.getEncodedState(), evaluate(state));
+			save(state, evaluate(state));
 			return;
 		}
 
@@ -62,14 +69,38 @@ public class Solver {
 
 		switch (state.nextTurn()) {
 		case PLAYER1:
-			scoreMap.put(state.getEncodedState(), decay * scores.stream().max(Double::compare).get());
+			save(state, decay * scores.stream().max(Double::compare).get());
 			break;
 		case PLAYER2:
-			scoreMap.put(state.getEncodedState(), decay * scores.stream().min(Double::compare).get());
+			save(state, decay * scores.stream().min(Double::compare).get());
 			break;
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + state.nextTurn());
 		}
+	}
+
+	private void save(State state, Double score) {
+		scoreMap.put(state.getEncodedState(), score);
+		if (storageBuffer == null)
+			storageBuffer = new ArrayList<>();
+		storageBuffer.add(state.getEncodedState() + " " + score);
+		if (storageBuffer.size() > bufferLimit)
+			saveTofile();
+	}
+
+	private void saveTofile() {
+		if (storageBuffer == null || storageBuffer.isEmpty())
+			return;
+		try {
+			FileHandler.save(gameName, storageBuffer);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (URISyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		storageBuffer = null;
 	}
 
 	private double evaluate(State state) {

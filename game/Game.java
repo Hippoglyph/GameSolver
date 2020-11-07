@@ -10,11 +10,11 @@ public class Game {
 	private State state;
 	private Solver solver;
 
-	public Game(String name, boolean start, State initState, int boardWidth, int boardHeight) {
+	public Game(String gameName, boolean start, State initState, int boardWidth, int boardHeight) {
 		this.initState = initState;
-		solver = new Solver(initState);
+		solver = new Solver(gameName, initState);
 		state = start ? initState : solver.getBestState(initState);
-		board = new Design(name, boardWidth, boardHeight, initState.colSize(), initState.rowSize()).getBoard();
+		board = new Design(gameName, boardWidth, boardHeight, initState.colSize(), initState.rowSize()).getBoard();
 		board.draw(state);
 		board.registerGridLocationListener(this::playerClicked);
 	}
