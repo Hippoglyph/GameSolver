@@ -81,12 +81,6 @@ public abstract class State {
 		return null;
 	}
 
-	abstract public VictoryState getVictoryState();
-
-	abstract public List<State> getAllNextStates();
-
-	abstract public State getNextState(int row, int col);
-
 	public PlayerTurn nextTurn() {
 		if (nextTurn == null) {
 			int player2Pieces = 0;
@@ -120,4 +114,10 @@ public abstract class State {
 		}
 		return newGridState;
 	}
+
+	abstract public VictoryState getVictoryState();
+
+	abstract public List<State> getAllNextStates();
+
+	abstract public State getNextState(int row, int col);
 }
