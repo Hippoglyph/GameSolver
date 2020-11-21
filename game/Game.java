@@ -9,8 +9,10 @@ public class Game {
 	private final Board board;
 	private State state;
 	private Solver solver;
+	private final boolean start;
 
 	public Game(String gameName, boolean start, State initState, int boardWidth, int boardHeight) {
+		this.start = start;
 		this.initState = initState;
 		solver = new Solver(gameName, initState);
 		state = start ? initState : solver.getBestState(initState);
@@ -21,7 +23,7 @@ public class Game {
 
 	private void playerClicked(int row, int col) {
 		if (state.getVictoryState() != VictoryState.UNDECIDED) {
-			state = initState;
+			state = start ? initState : solver.getBestState(initState);
 			board.draw(state);
 			return;
 		}

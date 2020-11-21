@@ -8,28 +8,15 @@ import solver.State;
 
 public class TicTacToeState extends State {
 
-	private static final int EMPTY = 0;
-	private static final int CIRCLE = 1;
-	private static final int CROSS = 2;
-
 	public static final int rowSize = 3;
 	public static final int colSize = 3;
-	private int[][] state = null;
-
-	private Turn nextTurn;
 
 	public TicTacToeState(long encodedState) {
 		super(encodedState);
 	}
 
-	private int[][] getState() {
-		if (state == null) {
-			state = getState(encodedState);
-		}
-		return state;
-	}
-
-	private int[][] getState(long encodedState) {
+	@Override
+	protected int[][] getState(long encodedState) {
 		int[][] gridState = new int[rowSize][colSize];
 		for (int r = 0; r < rowSize; r++) {
 			for (int c = 0; c < colSize; c++) {
@@ -40,7 +27,8 @@ public class TicTacToeState extends State {
 		return gridState;
 	}
 
-	private long getEncodedState(int[][] gridState) {
+	@Override
+	protected long getEncodedState(int[][] gridState) {
 		long encodedState = 0L;
 		for (int r = 0; r < rowSize; r++) {
 			for (int c = 0; c < colSize; c++) {
@@ -49,23 +37,6 @@ public class TicTacToeState extends State {
 			}
 		}
 		return encodedState;
-	}
-
-	@Override
-	public CellState getCellState(int r, int c) {
-		if (r >= rowSize() || r < 0 || c >= colSize() || c < 0)
-			return null;
-		int[][] gridState = getState();
-		int encodedCellState = gridState[r][c];
-
-		if (encodedCellState == EMPTY)
-			return CellState.EMPTY;
-		else if (encodedCellState == CIRCLE)
-			return CellState.PLAYER2;
-		else if (encodedCellState == CROSS)
-			return CellState.PLAYER1;
-
-		return null;
 	}
 
 	@Override
@@ -173,7 +144,7 @@ public class TicTacToeState extends State {
 		if (getVictoryState() != VictoryState.UNDECIDED)
 			return states;
 
-		int piece = nextTurn() == Turn.PLAYER1 ? CROSS : CIRCLE;
+		int piece = nextTurn() == PlayerTurn.PLAYER1 ? CROSS : CIRCLE;
 
 		for (int r = 0; r < rowSize(); r++) {
 			for (int c = 0; c < colSize(); c++) {
@@ -188,17 +159,7 @@ public class TicTacToeState extends State {
 		return states;
 	}
 
-	private int[][] getCopyOfState() {
-		int[][] gridState = getState();
-		int[][] newGridState = new int[rowSize()][colSize()];
-		for (int r = 0; r < rowSize(); r++) {
-			for (int c = 0; c < colSize(); c++) {
-				newGridState[r][c] = gridState[r][c];
-			}
-		}
-		return newGridState;
-	}
-
+	@Override
 	public State getNextState(int r, int c) {
 		if (getCellState(r, c) != CellState.EMPTY)
 			return null;
@@ -208,29 +169,5 @@ public class TicTacToeState extends State {
 				return state;
 		}
 		return null;
-	}
-
-	@Override
-	public Turn nextTurn() {
-		if (nextTurn == null) {
-			int circleCount = 0;
-			int crossCount = 0;
-			for (int r = 0; r < rowSize(); r++) {
-				for (int c = 0; c < colSize(); c++) {
-					switch (getCellState(r, c)) {
-					case PLAYER2:
-						circleCount++;
-						break;
-					case PLAYER1:
-						crossCount++;
-						break;
-					default:
-						break;
-					}
-				}
-			}
-			nextTurn = crossCount > circleCount ? Turn.PLAYER2 : Turn.PLAYER1;
-		}
-		return nextTurn;
 	}
 }
