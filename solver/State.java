@@ -26,6 +26,8 @@ public abstract class State {
 		this.encodedState = encodedState;
 	}
 
+	abstract public String getGameName();
+
 	public long getEncodedState() {
 		return encodedState;
 	}
@@ -41,9 +43,27 @@ public abstract class State {
 		return state;
 	}
 
-	abstract protected int[][] getState(long encodedState);
+	protected int[][] getState(long encodedState) {
+		int[][] gridState = new int[rowSize()][colSize()];
+		for (int r = 0; r < rowSize(); r++) {
+			for (int c = 0; c < colSize(); c++) {
+				long row = (encodedState >> ((rowSize() - 1 - r) * rowSize() * 2));
+				gridState[r][c] = (int) ((row >> ((colSize() - 1 - c) * 2)) & 3);
+			}
+		}
+		return gridState;
+	}
 
-	abstract protected long getEncodedState(int[][] gridState);
+	protected long getEncodedState(int[][] gridState) {
+		long encodedState = 0L;
+		for (int r = 0; r < rowSize(); r++) {
+			for (int c = 0; c < colSize(); c++) {
+				long row = (gridState[r][c] << ((rowSize() - 1 - r) * rowSize() * 2));
+				encodedState = encodedState | (row << ((colSize() - 1 - c) * 2));
+			}
+		}
+		return encodedState;
+	}
 
 	public CellState getCellState(int r, int c) {
 		if (r >= rowSize() || r < 0 || c >= colSize() || c < 0)

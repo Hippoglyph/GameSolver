@@ -16,27 +16,8 @@ public class TicTacToeState extends State {
 	}
 
 	@Override
-	protected int[][] getState(long encodedState) {
-		int[][] gridState = new int[rowSize][colSize];
-		for (int r = 0; r < rowSize; r++) {
-			for (int c = 0; c < colSize; c++) {
-				long row = (encodedState >> ((rowSize - 1 - r) * rowSize * 2));
-				gridState[r][c] = (int) ((row >> ((colSize - 1 - c) * 2)) & 3);
-			}
-		}
-		return gridState;
-	}
-
-	@Override
-	protected long getEncodedState(int[][] gridState) {
-		long encodedState = 0L;
-		for (int r = 0; r < rowSize; r++) {
-			for (int c = 0; c < colSize; c++) {
-				long row = (gridState[r][c] << ((rowSize - 1 - r) * rowSize * 2));
-				encodedState = encodedState | (row << ((colSize - 1 - c) * 2));
-			}
-		}
-		return encodedState;
+	public String getGameName() {
+		return "Tic Tac Toe";
 	}
 
 	@Override
