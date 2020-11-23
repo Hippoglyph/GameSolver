@@ -14,15 +14,19 @@ public class Solver {
 	private Map<Long, Double> scoreMap;
 	private List<String> storageBuffer;
 	private static final double decay = 0.99;
-	private static final int bufferLimit = 20000;
+	private static final int bufferLimit = (int) Math.pow(2, 25);
 	private final String gameName;
 
 	public Solver(String gameName, State initState) {
 		this.gameName = gameName;
 		scoreMap = new HashMap<>();
 		loadFromFile();
+		long startTime = System.currentTimeMillis();
+		int loadedItemCount = scoreMap.size();
 		solve(initState);
 		saveTofile();
+		System.out.println("Solved " + (scoreMap.size() - loadedItemCount) + " items, cost "
+				+ (System.currentTimeMillis() - startTime) + "ms");
 	}
 
 	private void loadFromFile() {
@@ -98,14 +102,14 @@ public class Solver {
 		if (storageBuffer == null)
 			storageBuffer = new ArrayList<>();
 		storageBuffer.add(state.getEncodedState() + " " + score);
-		if (storageBuffer.size() > bufferLimit)
+		if (storageBuffer.size() >= bufferLimit)
 			saveTofile();
 	}
 
 	private void saveTofile() {
 		if (storageBuffer == null || storageBuffer.isEmpty())
 			return;
-		System.out.println("Storing from file...");
+		System.out.println("Storing to file...");
 		long startTime = System.currentTimeMillis();
 		try {
 			FileHandler.save(gameName, storageBuffer);

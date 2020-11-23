@@ -6,7 +6,7 @@ import solver.State;
 
 public class Connect4State extends State {
 
-	public static final int rowSize = 6;
+	public static final int rowSize = 3;
 	public static final int colSize = 7;
 
 	private static final int victoryCount = 4;
@@ -33,35 +33,111 @@ public class Connect4State extends State {
 	@Override
 	public VictoryState getVictoryState() {
 		int emptyCount = 0;
-		// Row
+
 		for (int r = 0; r < rowSize(); r++) {
-			int circleCount = 0;
-			int crossCount = 0;
+			int player2Count = 0;
+			int player1Count = 0;
 			for (int c = 0; c < colSize(); c++) {
 				switch (getCellState(r, c)) {
 				case EMPTY:
-					circleCount = 0;
-					crossCount = 0;
+					player2Count = 0;
+					player1Count = 0;
 					emptyCount++;
 					break;
 				case PLAYER2:
-					circleCount++;
+					player2Count++;
 					break;
 				case PLAYER1:
-					crossCount++;
+					player1Count++;
 					break;
 				}
 			}
-			if (circleCount >= victoryCount)
+			if (player2Count >= victoryCount)
 				return VictoryState.PLAYER2;
-			if (crossCount >= victoryCount)
+			if (player1Count >= victoryCount)
+				return VictoryState.PLAYER1;
+		}
+		// Column
+		for (int c = 0; c < colSize(); c++) {
+			int player2Count = 0;
+			int player1Count = 0;
+			for (int r = 0; r < rowSize(); r++) {
+				switch (getCellState(r, c)) {
+				case EMPTY:
+					player2Count = 0;
+					player1Count = 0;
+					break;
+				case PLAYER2:
+					player2Count++;
+					break;
+				case PLAYER1:
+					player1Count++;
+					break;
+				}
+			}
+			if (player2Count >= victoryCount)
+				return VictoryState.PLAYER2;
+			if (player1Count >= victoryCount)
 				return VictoryState.PLAYER1;
 		}
 
-		// TODO Col
-		// TODO Diag
-		// TODO Filled
-		return null;
+		// Diag Main
+		for (int k = 0; k <= colSize() + rowSize() - 2; k++) {
+			int player2Count = 0;
+			int player1Count = 0;
+			for (int j = 0; j <= k; j++) {
+				int i = k - j;
+				if (i < rowSize() && j < colSize()) {
+					switch (getCellState(i, j)) {
+					case EMPTY:
+						player2Count = 0;
+						player1Count = 0;
+						break;
+					case PLAYER2:
+						player2Count++;
+						break;
+					case PLAYER1:
+						player1Count++;
+						break;
+					}
+					if (player2Count >= victoryCount)
+						return VictoryState.PLAYER2;
+					if (player1Count >= victoryCount)
+						return VictoryState.PLAYER1;
+				}
+			}
+		}
+
+		// Diag Secondary
+		for (int k = 0; k <= colSize() + rowSize() - 2; k++) {
+			int player2Count = 0;
+			int player1Count = 0;
+			for (int j = 0; j <= k; j++) {
+				int i = k - j;
+				if (i < rowSize() && j < colSize()) {
+					switch (getCellState(i, colSize() - 1 - j)) {
+					case EMPTY:
+						player2Count = 0;
+						player1Count = 0;
+						break;
+					case PLAYER2:
+						player2Count++;
+						break;
+					case PLAYER1:
+						player1Count++;
+						break;
+					}
+					if (player2Count >= victoryCount)
+						return VictoryState.PLAYER2;
+					if (player1Count >= victoryCount)
+						return VictoryState.PLAYER1;
+				}
+			}
+		}
+		if (emptyCount <= 0)
+			return VictoryState.DRAW;
+
+		return VictoryState.UNDECIDED;
 	}
 
 	@Override

@@ -8,8 +8,7 @@ import solver.State;
 
 public class TicTacToeState extends State {
 
-	public static final int rowSize = 3;
-	public static final int colSize = 3;
+	public static final int SIZE = 5;
 
 	public TicTacToeState(long encodedState) {
 		super(encodedState);
@@ -22,12 +21,12 @@ public class TicTacToeState extends State {
 
 	@Override
 	public int rowSize() {
-		return rowSize;
+		return SIZE;
 	}
 
 	@Override
 	public int colSize() {
-		return colSize;
+		return SIZE;
 	}
 
 	@Override
@@ -51,9 +50,9 @@ public class TicTacToeState extends State {
 					break;
 				}
 			}
-			if (circleCount >= rowSize())
+			if (circleCount >= SIZE)
 				return VictoryState.PLAYER2;
-			if (crossCount >= rowSize())
+			if (crossCount >= SIZE)
 				return VictoryState.PLAYER1;
 		}
 
@@ -73,9 +72,9 @@ public class TicTacToeState extends State {
 					break;
 				}
 			}
-			if (circleCount >= colSize())
+			if (circleCount >= SIZE)
 				return VictoryState.PLAYER2;
-			if (crossCount >= colSize())
+			if (crossCount >= SIZE)
 				return VictoryState.PLAYER1;
 		}
 
@@ -107,9 +106,9 @@ public class TicTacToeState extends State {
 			}
 		}
 
-		if (circleCount >= rowSize() || circleCountMain >= rowSize())
+		if (circleCount >= SIZE || circleCountMain >= SIZE)
 			return VictoryState.PLAYER2;
-		if (crossCount >= rowSize() || crossCountMain >= rowSize())
+		if (crossCount >= SIZE || crossCountMain >= SIZE)
 			return VictoryState.PLAYER1;
 
 		if (emptyCount <= 0)
@@ -125,7 +124,7 @@ public class TicTacToeState extends State {
 		if (getVictoryState() != VictoryState.UNDECIDED)
 			return states;
 
-		int piece = nextTurn() == PlayerTurn.PLAYER1 ? CROSS : CIRCLE;
+		int piece = nextTurn() == PlayerTurn.PLAYER1 ? PLAYER1 : PLAYER2;
 
 		for (int r = 0; r < rowSize(); r++) {
 			for (int c = 0; c < colSize(); c++) {

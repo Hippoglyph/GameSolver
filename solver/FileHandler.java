@@ -45,6 +45,7 @@ public class FileHandler {
 
 		if (gameFolder.isDirectory()) {
 			for (File file : gameFolder.listFiles()) {
+				System.out.println(file.toString());
 				BufferedReader reader = new BufferedReader(new FileReader(file));
 				String currentLine;
 				while ((currentLine = reader.readLine()) != null) {

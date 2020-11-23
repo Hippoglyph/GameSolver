@@ -7,8 +7,8 @@ import game.Board.CellState;
 public abstract class State {
 
 	public static final int EMPTY = 0;
-	public static final int CIRCLE = 1;
-	public static final int CROSS = 2;
+	public static final int PLAYER1 = 1;
+	public static final int PLAYER2 = 2;
 
 	public enum VictoryState {
 		PLAYER1, PLAYER2, DRAW, UNDECIDED
@@ -36,6 +36,14 @@ public abstract class State {
 
 	abstract public int colSize();
 
+	public int getCellEncodingSize() {
+		return 2;
+	}
+
+	public int getCellEncodingBitMerge() {
+		return 3;
+	}
+
 	protected int[][] getState() {
 		if (state == null) {
 			state = getState(encodedState);
@@ -44,11 +52,12 @@ public abstract class State {
 	}
 
 	protected int[][] getState(long encodedState) {
+		long mutatedState = encodedState;
 		int[][] gridState = new int[rowSize()][colSize()];
 		for (int r = 0; r < rowSize(); r++) {
 			for (int c = 0; c < colSize(); c++) {
-				long row = (encodedState >> ((rowSize() - 1 - r) * rowSize() * 2));
-				gridState[r][c] = (int) ((row >> ((colSize() - 1 - c) * 2)) & 3);
+				gridState[r][c] = (int) (mutatedState & getCellEncodingBitMerge());
+				mutatedState = mutatedState >> getCellEncodingSize();
 			}
 		}
 		return gridState;
@@ -56,12 +65,13 @@ public abstract class State {
 
 	protected long getEncodedState(int[][] gridState) {
 		long encodedState = 0L;
-		for (int r = 0; r < rowSize(); r++) {
-			for (int c = 0; c < colSize(); c++) {
-				long row = (gridState[r][c] << ((rowSize() - 1 - r) * rowSize() * 2));
-				encodedState = encodedState | (row << ((colSize() - 1 - c) * 2));
+		for (int r = rowSize() - 1; r >= 0; r--) {
+			for (int c = colSize() - 1; c >= 0; c--) {
+				encodedState = encodedState | gridState[r][c];
+				encodedState = encodedState << getCellEncodingSize();
 			}
 		}
+		encodedState = encodedState >> getCellEncodingSize();
 		return encodedState;
 	}
 
@@ -73,9 +83,9 @@ public abstract class State {
 
 		if (encodedCellState == EMPTY)
 			return CellState.EMPTY;
-		else if (encodedCellState == CIRCLE)
+		else if (encodedCellState == PLAYER2)
 			return CellState.PLAYER2;
-		else if (encodedCellState == CROSS)
+		else if (encodedCellState == PLAYER1)
 			return CellState.PLAYER1;
 
 		return null;
