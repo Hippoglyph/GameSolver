@@ -1,43 +1,38 @@
 package solver;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import solver.persist.DatabaseFacade;
+
 public class Solver {
 
 	private Map<Long, Double> scoreMap;
-	private List<String> storageBuffer;
 	private static final double decay = 0.99;
-	private static final int bufferLimit = (int) Math.pow(2, 25);
 	private final String gameName;
+	private DatabaseFacade facade;
 
 	public Solver(String gameName, State initState) {
 		this.gameName = gameName;
 		scoreMap = new HashMap<>();
-		loadFromFile();
+		this.facade = new DatabaseFacade(gameName);
+		loadFromDatabase();
 		long startTime = System.currentTimeMillis();
 		int loadedItemCount = scoreMap.size();
 		solve(initState);
-		saveTofile();
+		facade.clear();
+		facade.close();
 		System.out.println("Solved " + (scoreMap.size() - loadedItemCount) + " items, cost "
 				+ (System.currentTimeMillis() - startTime) + "ms");
 	}
 
-	private void loadFromFile() {
-		System.out.println("Loading from file...");
+	private void loadFromDatabase() {
+		System.out.println("Loading from database...");
 		long startTime = System.currentTimeMillis();
-		try {
-			FileHandler.load(gameName, scoreMap);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		facade.fill(scoreMap);
 		System.out.println(
 				"Loaded " + scoreMap.size() + " items, cost " + (System.currentTimeMillis() - startTime) + "ms");
 	}
@@ -99,30 +94,7 @@ public class Solver {
 
 	private void save(State state, Double score) {
 		scoreMap.put(state.getEncodedState(), score);
-		if (storageBuffer == null)
-			storageBuffer = new ArrayList<>();
-		storageBuffer.add(state.getEncodedState() + " " + score);
-		if (storageBuffer.size() >= bufferLimit)
-			saveTofile();
-	}
-
-	private void saveTofile() {
-		if (storageBuffer == null || storageBuffer.isEmpty())
-			return;
-		System.out.println("Storing to file...");
-		long startTime = System.currentTimeMillis();
-		try {
-			FileHandler.save(gameName, storageBuffer);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		System.out.println(
-				"Stored " + storageBuffer.size() + " items, cost " + (System.currentTimeMillis() - startTime) + "ms");
-		storageBuffer = null;
+		facade.save(state.getEncodedState(), score);
 	}
 
 	private double evaluate(State state) {
