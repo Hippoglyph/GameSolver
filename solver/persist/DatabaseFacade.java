@@ -3,6 +3,7 @@ package solver.persist;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedException;
 
@@ -57,21 +58,32 @@ public class DatabaseFacade {
 	public void clear() {
 		if (unstoredData.isEmpty())
 			return;
-		// System.out.println("Storing to database...");
-		long startTime = System.currentTimeMillis();
-		try {
-			Database.store(gameName, unstoredData);
-		} catch (MonetDBEmbeddedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-//		System.out.println(
-//				"Stored " + unstoredData.size() + " items, cost " + (System.currentTimeMillis() - startTime) + "ms");
+		List<Pair<Long, Double>> shallowCopy = new ArrayList<>(unstoredData);
+
+		Executors.newSingleThreadExecutor().execute(() -> {
+			// System.out.println("Storing to database...");
+			long startTime = System.currentTimeMillis();
+			try {
+				Database.store(gameName, shallowCopy);
+			} catch (MonetDBEmbeddedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			System.out.println(
+					"Stored " + shallowCopy.size() + " items, cost " + (System.currentTimeMillis() - startTime) + "ms");
+		});
 		unstoredData.clear();
+
 	}
 
 	public void close() {
 		clear();
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		Database.close();
 	}
 }

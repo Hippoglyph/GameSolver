@@ -1,10 +1,13 @@
 package solver.persist;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.Locale;
+import java.util.UUID;
 
 import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedConnection;
 import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedDatabase;
@@ -14,6 +17,7 @@ import nl.cwi.monetdb.embedded.resultset.QueryResultSet;
 public class Database {
 
 	private static final String BASE_FOLDER_NAME = "storage";
+	private static final String PEDNING_STORAGE_NAME = "pending";
 	private static final String ENCODED_NAME = "encodedState";
 	private static final String SCORE_NAME = "score";
 
@@ -27,27 +31,31 @@ public class Database {
 	}
 
 	public static void init() throws MonetDBEmbeddedException {
-		System.out.println("Connecting to database...");
-		MonetDBEmbeddedDatabase.startDatabase(getBaseFolder().getAbsolutePath());
-		System.out.println("Connected");
+		if (!isRunning()) {
+			System.out.println("Connecting to database...");
+			MonetDBEmbeddedDatabase.startDatabase(getBaseFolder().getAbsolutePath());
+			System.out.println("Connected");
+		}
 	}
 
 	public static void store(String tableName, List<Pair<Long, Double>> inputs) throws MonetDBEmbeddedException {
 
-		String values = IntStream.range(0, inputs.size())
-				.mapToObj(i -> "(" + inputs.get(i).first() + "," + inputs.get(i).second() + ")")
-				.collect(Collectors.joining(","));
+		File file = createCSVFile(inputs);
 
-		MonetDBEmbeddedConnection connection = MonetDBEmbeddedDatabase.createConnection();
-		connection.startTransaction();
-		int numberOfInsertions = connection.executeUpdate(
-				"INSERT INTO " + tableName + "(" + ENCODED_NAME + "," + SCORE_NAME + ")  VALUES " + values);
-		connection.commit();
+		int numberOfInsertions = storeFromFile(file.getAbsolutePath().replace("\\", "\\\\"), tableName);
 
-		if (inputs.size() != numberOfInsertions)
+		if (inputs.size() != numberOfInsertions || !file.delete())
 			throw new MonetDBEmbeddedException("Invalid Insertion");
+	}
+
+	public static synchronized int storeFromFile(String filePath, String tableName) throws MonetDBEmbeddedException {
+		MonetDBEmbeddedConnection connection = MonetDBEmbeddedDatabase.createConnection();
+
+		int numberOfInsertions = connection
+				.executeUpdate("COPY INTO " + tableName + " FROM '" + filePath + "' USING DELIMITERS '|', '\n', ''");
 
 		connection.close();
+		return numberOfInsertions;
 	}
 
 	public static Pair<Long, Double> fetch(String tableName, long encodedState) throws MonetDBEmbeddedException {
@@ -56,6 +64,7 @@ public class Database {
 				.executeQuery("SELECT * FROM " + tableName + " WHERE " + ENCODED_NAME + "=" + encodedState);
 		Pair<Long, Double> pair = result.getNumberOfRows() < 1 ? null
 				: new Pair<>(result.getLongByColumnIndexAndRow(1, 1), result.getDoubleByColumnIndexAndRow(2, 1));
+		result.close();
 		connection.close();
 		return pair;
 	}
@@ -68,6 +77,7 @@ public class Database {
 			pairs.add(new Pair<Long, Double>(result.getLongByColumnIndexAndRow(1, row),
 					result.getDoubleByColumnIndexAndRow(2, row)));
 		}
+		result.close();
 		connection.close();
 		return pairs;
 	}
@@ -80,8 +90,28 @@ public class Database {
 			connection.executeUpdate("DROP TABLE " + result.getStringByColumnIndexAndRow(1, row));
 		}
 		System.out.println("Wiped " + result.getNumberOfRows() + " tables");
-
+		result.close();
 		connection.close();
+	}
+
+	private static File createCSVFile(List<Pair<Long, Double>> inputs) {
+		String fileName = UUID.randomUUID().toString();
+		File file = new File(getPendingFolder(), fileName + ".csv");
+		try {
+
+			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+
+			for (Pair<Long, Double> pair : inputs) {
+				writer.write(String.format(Locale.US, "%d|%f\n", pair.first(), pair.second()));
+			}
+
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return file;
 	}
 
 	private static File getBaseFolder() {
@@ -89,6 +119,17 @@ public class Database {
 		if (!baseFolder.exists())
 			baseFolder.mkdir();
 		return baseFolder;
+	}
+
+	private static File getPendingFolder() {
+		File pendingFolder = new File(getBaseFolder(), PEDNING_STORAGE_NAME);
+		if (!pendingFolder.exists())
+			pendingFolder.mkdir();
+		return pendingFolder;
+	}
+
+	public static boolean isRunning() {
+		return MonetDBEmbeddedDatabase.isDatabaseRunning();
 	}
 
 	public static void close() {
