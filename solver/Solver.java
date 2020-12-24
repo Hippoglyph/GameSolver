@@ -1,44 +1,19 @@
 package solver;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
-import solver.persist.DatabaseFacade;
+import solver.persist.ScoreMap;
 
 public class Solver {
 
-	private Map<Long, Double> scoreMap;
+	private ScoreMap scoreMap;
 	private static final double decay = 0.99;
-	private final String gameName;
-	private DatabaseFacade facade;
 
 	public Solver(String gameName, State initState) {
-		this.gameName = gameName;
-		scoreMap = new HashMap<>();
-		this.facade = new DatabaseFacade(gameName);
-		loadFromDatabase();
-		long startTime = System.currentTimeMillis();
-		int loadedItemCount = scoreMap.size();
-		solve(initState);
-		facade.clear();
-		facade.close();
-		System.out.println("Solved " + (scoreMap.size() - loadedItemCount) + " items, cost "
-				+ (System.currentTimeMillis() - startTime) + "ms");
-	}
-
-	private void loadFromDatabase() {
-		System.out.println("Loading from database...");
-		long startTime = System.currentTimeMillis();
-		facade.fill(scoreMap);
-		System.out.println(
-				"Loaded " + scoreMap.size() + " items, cost " + (System.currentTimeMillis() - startTime) + "ms");
-	}
-
-	public double score(State state) {
-		return scoreMap.get(state.getEncodedState());
+		scoreMap = new ScoreMap(gameName);
+		solve(initState);// TODO
 	}
 
 	public State getBestState(State state) {
@@ -94,7 +69,6 @@ public class Solver {
 
 	private void save(State state, Double score) {
 		scoreMap.put(state.getEncodedState(), score);
-		facade.save(state.getEncodedState(), score);
 	}
 
 	private double evaluate(State state) {

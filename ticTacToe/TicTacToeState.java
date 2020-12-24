@@ -8,7 +8,7 @@ import solver.State;
 
 public class TicTacToeState extends State {
 
-	public static final int SIZE = 3;
+	public static final int SIZE = 4;
 
 	public TicTacToeState(long encodedState) {
 		super(encodedState);
