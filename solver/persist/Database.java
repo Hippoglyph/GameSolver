@@ -69,9 +69,9 @@ public class Database {
 		return pair;
 	}
 
-	public static List<Pair<Long, Double>> fetch(String tableName) throws MonetDBEmbeddedException {
+	public static List<Pair<Long, Double>> fetch(String tableName, int limit) throws MonetDBEmbeddedException {
 		MonetDBEmbeddedConnection connection = MonetDBEmbeddedDatabase.createConnection();
-		QueryResultSet result = connection.executeQuery("SELECT * FROM " + tableName);
+		QueryResultSet result = connection.executeQuery("SELECT * FROM " + tableName + " LIMIT " + limit);
 		List<Pair<Long, Double>> pairs = new ArrayList<Pair<Long, Double>>();
 		for (int row = 1; row <= result.getNumberOfRows(); row++) {
 			pairs.add(new Pair<Long, Double>(result.getLongByColumnIndexAndRow(1, row),
@@ -80,6 +80,15 @@ public class Database {
 		result.close();
 		connection.close();
 		return pairs;
+	}
+
+	public static int size(String tableName) throws MonetDBEmbeddedException {
+		MonetDBEmbeddedConnection connection = MonetDBEmbeddedDatabase.createConnection();
+		QueryResultSet result = connection.executeQuery("SELECT COUNT(*) FROM " + tableName);
+		int size = result.getIntegerByColumnIndexAndRow(1, 1);
+		result.close();
+		connection.close();
+		return size;
 	}
 
 	public static void wipeAllData() throws MonetDBEmbeddedException {
