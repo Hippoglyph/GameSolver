@@ -16,8 +16,8 @@ public class Game {
 		this.initState = initState;
 		solver = new Solver(initState.getGameName(), initState);
 		state = start ? initState : solver.getBestState(initState);
-		board = new Design(initState.getGameName(), boardWidth, boardHeight, initState.colSize(), initState.rowSize())
-				.getBoard();
+		board = new Design(initState.getGameName(), boardWidth, boardHeight, initState.colSize(), initState.rowSize(),
+				solver::close).getBoard();
 		board.draw(state);
 		board.registerGridLocationListener(this::playerClicked);
 	}

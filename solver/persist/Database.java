@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedConnection;
 import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedDatabase;
@@ -58,15 +59,20 @@ public class Database {
 		return numberOfInsertions;
 	}
 
-	public static Pair<Long, Double> fetch(String tableName, long encodedState) throws MonetDBEmbeddedException {
+	public static List<Pair<Long, Double>> fetch(String tableName, List<Long> encodedStates)
+			throws MonetDBEmbeddedException {
 		MonetDBEmbeddedConnection connection = MonetDBEmbeddedDatabase.createConnection();
-		QueryResultSet result = connection
-				.executeQuery("SELECT * FROM " + tableName + " WHERE " + ENCODED_NAME + "=" + encodedState);
-		Pair<Long, Double> pair = result.getNumberOfRows() < 1 ? null
-				: new Pair<>(result.getLongByColumnIndexAndRow(1, 1), result.getDoubleByColumnIndexAndRow(2, 1));
+		String whereString = encodedStates.stream().map(s -> ENCODED_NAME + "=" + s)
+				.collect(Collectors.joining(" OR "));
+		QueryResultSet result = connection.executeQuery("SELECT * FROM " + tableName + " WHERE " + whereString);
+		List<Pair<Long, Double>> pairs = new ArrayList<Pair<Long, Double>>();
+		for (int row = 1; row <= result.getNumberOfRows(); row++) {
+			pairs.add(new Pair<Long, Double>(result.getLongByColumnIndexAndRow(1, row),
+					result.getDoubleByColumnIndexAndRow(2, row)));
+		}
 		result.close();
 		connection.close();
-		return pair;
+		return pairs;
 	}
 
 	public static List<Pair<Long, Double>> fetch(String tableName, int limit) throws MonetDBEmbeddedException {

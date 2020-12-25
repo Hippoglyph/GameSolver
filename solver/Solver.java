@@ -13,34 +13,33 @@ public class Solver {
 
 	public Solver(String gameName, State initState) {
 		scoreMap = new ScoreMap(gameName);
-		solve(initState);// TODO
+		long startTime = System.currentTimeMillis();
+		System.out.println("Solving " + gameName);
+		solve(initState);
+		System.out.println("Solved " + scoreMap.size() + " states " + (System.currentTimeMillis() - startTime) + "ms");
 	}
 
 	public State getBestState(State state) {
 		List<State> nextStates = state.getAllNextStates();
 		if (nextStates.isEmpty())
 			return null;
-		if (!nextStates.stream().allMatch(s -> scoreMap.containsKey(s.getEncodedState())))
+		if (!nextStates.stream().allMatch(s -> scoreMap.containsKey(s)))
 			throw new IllegalStateException();
 
 		Collections.shuffle(nextStates);
 
 		switch (state.nextTurn()) {
 		case PLAYER1:
-			return nextStates.stream()
-					.max((a, b) -> scoreMap.get(a.getEncodedState()).compareTo(scoreMap.get(b.getEncodedState())))
-					.get();
+			return nextStates.stream().max((a, b) -> scoreMap.get(a).compareTo(scoreMap.get(b))).get();
 		case PLAYER2:
-			return nextStates.stream()
-					.min((a, b) -> scoreMap.get(a.getEncodedState()).compareTo(scoreMap.get(b.getEncodedState())))
-					.get();
+			return nextStates.stream().min((a, b) -> scoreMap.get(a).compareTo(scoreMap.get(b))).get();
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + state.nextTurn());
 		}
 	}
 
 	private void solve(State state) {
-		if (scoreMap.containsKey(state.getEncodedState()))
+		if (scoreMap.containsKey(state))
 			return;
 
 		List<State> nextStates = state.getAllNextStates();
@@ -52,8 +51,7 @@ public class Solver {
 
 		nextStates.forEach(s -> solve(s));
 
-		List<Double> scores = nextStates.stream().map(s -> scoreMap.get(s.getEncodedState()))
-				.collect(Collectors.toList());
+		List<Double> scores = nextStates.stream().map(s -> scoreMap.get(s)).collect(Collectors.toList());
 
 		switch (state.nextTurn()) {
 		case PLAYER1:
@@ -68,7 +66,7 @@ public class Solver {
 	}
 
 	private void save(State state, Double score) {
-		scoreMap.put(state.getEncodedState(), score);
+		scoreMap.put(state, score);
 	}
 
 	private double evaluate(State state) {
@@ -82,5 +80,9 @@ public class Solver {
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + state.getVictoryState());
 		}
+	}
+
+	public void close() {
+		scoreMap.close();
 	}
 }

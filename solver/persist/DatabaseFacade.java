@@ -1,11 +1,7 @@
 package solver.persist;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 
 import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedException;
@@ -16,7 +12,7 @@ public class DatabaseFacade {
 
 	private List<Pair<Long, Double>> unstoredData = new ArrayList<>();
 
-	private Set<UUID> pendingSaves = Collections.newSetFromMap(new ConcurrentHashMap<UUID, Boolean>());
+	final CountUpDownLatch latch = new CountUpDownLatch();
 
 	private String gameName;
 
@@ -37,13 +33,10 @@ public class DatabaseFacade {
 		}
 	}
 
-	public Double get(long encodedState) {
+	public List<Pair<Long, Double>> get(List<Long> encodedStates) {
 		waitUntilSynced();
 		try {
-			Pair<Long, Double> pair = Database.fetch(gameName, encodedState);
-			if (pair == null)
-				return null;
-			return pair.second();
+			return Database.fetch(gameName, encodedStates);
 		} catch (MonetDBEmbeddedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -52,6 +45,8 @@ public class DatabaseFacade {
 	}
 
 	public int size() {
+		commit();
+		waitUntilSynced();
 		try {
 			return Database.size(gameName);
 		} catch (MonetDBEmbeddedException e) {
@@ -65,8 +60,7 @@ public class DatabaseFacade {
 		if (unstoredData.isEmpty())
 			return;
 
-		UUID key = UUID.randomUUID();
-		pendingSaves.add(key);
+		latch.countUp();
 		List<Pair<Long, Double>> shallowCopy = new ArrayList<>(unstoredData);
 
 		Executors.newSingleThreadExecutor().execute(() -> {
@@ -79,23 +73,17 @@ public class DatabaseFacade {
 			}
 			System.out.println(
 					"Stored " + shallowCopy.size() + " items, cost " + (System.currentTimeMillis() - startTime) + "ms");
-			pendingSaves.remove(key);
+			latch.countDown();
 		});
 		unstoredData.clear();
 	}
 
-	private boolean isSynced() {
-		return pendingSaves.isEmpty();
-	}
-
 	private void waitUntilSynced() {
-		while (!isSynced()) {
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		try {
+			latch.await();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 

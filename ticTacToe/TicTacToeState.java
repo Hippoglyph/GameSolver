@@ -16,7 +16,7 @@ public class TicTacToeState extends State {
 
 	@Override
 	public String getGameName() {
-		return "Tic Tac Toe";
+		return "Tic Tac Toe " + SIZE;
 	}
 
 	@Override
