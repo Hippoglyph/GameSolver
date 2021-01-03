@@ -12,13 +12,17 @@ public class Solver {
 	private ScoreMap scoreMap;
 	private static final double decay = 0.99;
 	private volatile boolean interrupted;
+	private Random rng;
+	private long lastProgressTimeStamp;
+	private static long printFreq = 600;
 
 	public void initilize(String gameName, State initState) {
 		scoreMap = new ScoreMap(gameName);
 		long startTime = System.currentTimeMillis();
+		lastProgressTimeStamp = startTime;
 		System.out.println("Solving " + gameName);
-		System.out.println(estimatedSize(initState));
 		if (!scoreMap.containsKey(initState)) {
+			System.out.println("Starting at " + scoreMap.size() + " states solved");
 			solveFromBottom(initState);
 		}
 		System.out.println("Solved " + scoreMap.size() + " states " + (System.currentTimeMillis() - startTime) + "ms");
@@ -53,27 +57,26 @@ public class Solver {
 	}
 
 	private int estimatedSize(State root) {
-		double count = 0;
-		int numOfTrials = 10000;
-		Random rng = new Random();
+		int count = 0;
+		int numOfTrials = 100;
+		rng = new Random();
 		for (int t = 0; t < numOfTrials; t++) {
-			double prod = 1;
-			double trialCount = 1;
-			State state = root;
-			List<State> nextStates = state.getAllNextStates();
-			while (!nextStates.isEmpty()) {
-				prod *= nextStates.size();
-				trialCount += prod;
-				state = nextStates.get(rng.nextInt(nextStates.size()));
-				nextStates = state.getAllNextStates();
-			}
-			count += trialCount;
+			count += estimateSize(root);
 		}
 
-		return (int) (count / ((double) numOfTrials));
+		return count / numOfTrials;
+	}
+
+	private int estimateSize(State state) {
+		List<State> nextStates = state.getAllNextStates();
+		if (nextStates.isEmpty())
+			return 1;
+		State newState = nextStates.get(rng.nextInt(nextStates.size()));
+		return 1 + estimateSize(newState) * nextStates.size();
 	}
 
 	private void solve(State state) {
+		progressPrint();
 		if (interrupted)
 			return;
 		if (scoreMap.containsKey(state))
@@ -118,6 +121,13 @@ public class Solver {
 			return -1;
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + state.getVictoryState());
+		}
+	}
+
+	private void progressPrint() {
+		if (System.currentTimeMillis() - lastProgressTimeStamp > printFreq * 1000) {
+			System.out.println(scoreMap.size() + " states solved");
+			lastProgressTimeStamp = System.currentTimeMillis();
 		}
 	}
 
