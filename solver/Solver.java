@@ -2,6 +2,7 @@ package solver;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import solver.persist.ScoreMap;
@@ -10,13 +11,19 @@ public class Solver {
 
 	private ScoreMap scoreMap;
 	private static final double decay = 0.99;
+	private volatile boolean interrupted;
 
-	public Solver(String gameName, State initState) {
+	public void initilize(String gameName, State initState) {
 		scoreMap = new ScoreMap(gameName);
 		long startTime = System.currentTimeMillis();
 		System.out.println("Solving " + gameName);
-		solve(initState);
+		System.out.println(estimatedSize(initState));
+		if (!scoreMap.containsKey(initState)) {
+			solveFromBottom(initState);
+		}
 		System.out.println("Solved " + scoreMap.size() + " states " + (System.currentTimeMillis() - startTime) + "ms");
+		if (interrupted)
+			close();
 	}
 
 	public State getBestState(State state) {
@@ -38,7 +45,37 @@ public class Solver {
 		}
 	}
 
+	private void solveFromBottom(State state) {
+		List<State> nextStates = state.getAllNextStates();
+		if (nextStates.isEmpty())
+			solveFromBottom(nextStates.get(0));
+		solve(state);
+	}
+
+	private int estimatedSize(State root) {
+		double count = 0;
+		int numOfTrials = 10000;
+		Random rng = new Random();
+		for (int t = 0; t < numOfTrials; t++) {
+			double prod = 1;
+			double trialCount = 1;
+			State state = root;
+			List<State> nextStates = state.getAllNextStates();
+			while (!nextStates.isEmpty()) {
+				prod *= nextStates.size();
+				trialCount += prod;
+				state = nextStates.get(rng.nextInt(nextStates.size()));
+				nextStates = state.getAllNextStates();
+			}
+			count += trialCount;
+		}
+
+		return (int) (count / ((double) numOfTrials));
+	}
+
 	private void solve(State state) {
+		if (interrupted)
+			return;
 		if (scoreMap.containsKey(state))
 			return;
 
@@ -53,6 +90,8 @@ public class Solver {
 
 		List<Double> scores = nextStates.stream().map(s -> scoreMap.get(s)).collect(Collectors.toList());
 
+		if (interrupted)
+			return;
 		switch (state.nextTurn()) {
 		case PLAYER1:
 			save(state, decay * scores.stream().max(Double::compare).get());
@@ -80,6 +119,10 @@ public class Solver {
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + state.getVictoryState());
 		}
+	}
+
+	public void interrupt() {
+		interrupted = true;
 	}
 
 	public void close() {
