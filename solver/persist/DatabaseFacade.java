@@ -17,7 +17,7 @@ public class DatabaseFacade {
 	private String gameName;
 
 	public DatabaseFacade(String gameName) {
-		this.gameName = gameName.trim().replaceAll("\s*", "_");
+		this.gameName = gameName.trim().replaceAll("\s+", "_");
 		try {
 			Database.init(this.gameName);
 		} catch (MonetDBEmbeddedException e) {
@@ -33,10 +33,10 @@ public class DatabaseFacade {
 		}
 	}
 
-	public List<Pair<Long, Double>> get(List<Long> encodedStates) {
+	public List<Pair<Long, Double>> get(Long encodedState) {
 		waitUntilSynced();
 		try {
-			return Database.fetch(gameName, encodedStates);
+			return Database.fetch(gameName, encodedState);
 		} catch (MonetDBEmbeddedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

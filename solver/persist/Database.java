@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedConnection;
 import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedDatabase;
@@ -52,26 +51,29 @@ public class Database {
 	public static synchronized int storeFromFile(String filePath, String tableName) throws MonetDBEmbeddedException {
 		MonetDBEmbeddedConnection connection = MonetDBEmbeddedDatabase.createConnection();
 
-		int numberOfInsertions = connection
-				.executeUpdate("COPY INTO " + tableName + " FROM '" + filePath + "' USING DELIMITERS '|', '\n', ''");
+		int numberOfInsertions = connection.executeUpdate("COPY INTO " + tableName + " (" + ENCODED_NAME + ","
+				+ SCORE_NAME + ") FROM '" + filePath + "' USING DELIMITERS '|', '\n', ''");
 
 		connection.close();
 		return numberOfInsertions;
 	}
 
-	public static List<Pair<Long, Double>> fetch(String tableName, List<Long> encodedStates)
-			throws MonetDBEmbeddedException {
+	public static List<Pair<Long, Double>> fetch(String tableName, Long encodedState) throws MonetDBEmbeddedException {
 		MonetDBEmbeddedConnection connection = MonetDBEmbeddedDatabase.createConnection();
-		String whereString = encodedStates.stream().map(s -> ENCODED_NAME + "=" + s)
-				.collect(Collectors.joining(" OR "));
-		QueryResultSet result = connection.executeQuery("SELECT * FROM " + tableName + " WHERE " + whereString);
 		List<Pair<Long, Double>> pairs = new ArrayList<Pair<Long, Double>>();
+		String query = "SELECT " + ENCODED_NAME + "," + SCORE_NAME + " FROM " + tableName + " WHERE " + ENCODED_NAME
+				+ " = " + encodedState;
+
+		QueryResultSet result = connection.executeQuery(query);
+
 		for (int row = 1; row <= result.getNumberOfRows(); row++) {
 			pairs.add(new Pair<Long, Double>(result.getLongByColumnIndexAndRow(1, row),
 					result.getDoubleByColumnIndexAndRow(2, row)));
 		}
+
 		result.close();
 		connection.close();
+
 		return pairs;
 	}
 
@@ -80,8 +82,8 @@ public class Database {
 		QueryResultSet result = connection.executeQuery("SELECT * FROM " + tableName + " LIMIT " + limit);
 		List<Pair<Long, Double>> pairs = new ArrayList<Pair<Long, Double>>();
 		for (int row = 1; row <= result.getNumberOfRows(); row++) {
-			pairs.add(new Pair<Long, Double>(result.getLongByColumnIndexAndRow(1, row),
-					result.getDoubleByColumnIndexAndRow(2, row)));
+			pairs.add(new Pair<Long, Double>(result.getLongByColumnIndexAndRow(2, row),
+					result.getDoubleByColumnIndexAndRow(3, row)));
 		}
 		result.close();
 		connection.close();

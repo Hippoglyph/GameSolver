@@ -6,15 +6,23 @@ import solver.State.VictoryState;
 
 public class Game {
 	private final State initState;
-	private final Board board;
+	private Board board;
 	private State state;
 	private Solver solver;
 	private final boolean start;
+	private volatile boolean earlyInterruption;
 
 	public Game(boolean start, State initState, int boardWidth, int boardHeight) {
 		this.start = start;
 		this.initState = initState;
-		solver = new Solver(initState.getGameName(), initState);
+		solver = new Solver();
+		new TerminalInterrupter(() -> {
+			solver.interrupt();
+			earlyInterruption = true;
+		});
+		solver.initilize(initState.getGameName(), initState);
+		if (earlyInterruption)
+			System.exit(0);
 		state = start ? initState : solver.getBestState(initState);
 		board = new Design(initState.getGameName(), boardWidth, boardHeight, initState.colSize(), initState.rowSize(),
 				solver::close).getBoard();
