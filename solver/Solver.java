@@ -15,19 +15,37 @@ public class Solver {
 	private Random rng;
 	private long lastProgressTimeStamp;
 	private static long printFreq = 600;
+	private int estimatedSize = 1;
 
 	public void initilize(String gameName, State initState) {
 		scoreMap = new ScoreMap(gameName);
 		long startTime = System.currentTimeMillis();
-		lastProgressTimeStamp = startTime;
+		lastProgressTimeStamp = 0;
 		System.out.println("Solving " + gameName);
 		if (!scoreMap.containsKey(initState)) {
-			System.out.println("Starting at " + scoreMap.size() + " states solved");
+			estimatedSize = estimatedSize(initState);
 			solveFromBottom(initState);
 		}
-		System.out.println("Solved " + scoreMap.size() + " states " + (System.currentTimeMillis() - startTime) + "ms");
+		System.out.println("Solved " + scoreMap.size() + " states " + getTime(System.currentTimeMillis() - startTime));
 		if (interrupted)
 			close();
+	}
+
+	private String getTime(long ms) {
+		String unit = "ms";
+		long number = ms;
+		if (ms > 36000000) {
+			unit = "h";
+			number = (long) ((double) ms / 3600000.0);
+		} else if (ms > 600000) {
+			unit = "min";
+			number = (long) ((double) ms / 60000.0);
+		} else if (ms > 10000) {
+			unit = "s";
+			number = (long) ((double) ms / 1000.0);
+		}
+
+		return String.format("%d%s", number, unit);
 	}
 
 	public State getBestState(State state) {
@@ -52,19 +70,19 @@ public class Solver {
 	private void solveFromBottom(State state) {
 		List<State> nextStates = state.getAllNextStates();
 		if (nextStates.isEmpty())
-			solveFromBottom(nextStates.get(0));
+			solveFromBottom(nextStates.get(rng.nextInt(nextStates.size())));
 		solve(state);
 	}
 
 	private int estimatedSize(State root) {
-		int count = 0;
-		int numOfTrials = 100;
+		double count = 0;
+		int numOfTrials = 1000;
 		rng = new Random();
 		for (int t = 0; t < numOfTrials; t++) {
-			count += estimateSize(root);
+			count += estimateSize(root) / numOfTrials;
 		}
 
-		return count / numOfTrials;
+		return (int) count;
 	}
 
 	private int estimateSize(State state) {
@@ -126,7 +144,9 @@ public class Solver {
 
 	private void progressPrint() {
 		if (System.currentTimeMillis() - lastProgressTimeStamp > printFreq * 1000) {
-			System.out.println(scoreMap.size() + " states solved");
+			int statesSolved = scoreMap.size();
+			System.out.println(
+					String.format("%d states solved (%.1f%%)", statesSolved, statesSolved * 100.0 / estimatedSize));
 			lastProgressTimeStamp = System.currentTimeMillis();
 		}
 	}

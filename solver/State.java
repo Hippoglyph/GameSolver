@@ -40,8 +40,8 @@ public abstract class State {
 		return 2;
 	}
 
-	public int getCellEncodingBitMerge() {
-		return 3;
+	private int getCellEncodingBitMerge() {
+		return ~(-1 << getCellEncodingSize());
 	}
 
 	protected int[][] getState() {

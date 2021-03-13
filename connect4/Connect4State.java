@@ -1,7 +1,9 @@
 package connect4;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import game.Board.CellState;
 import solver.State;
 
 public class Connect4State extends State {
@@ -142,13 +144,39 @@ public class Connect4State extends State {
 
 	@Override
 	public List<State> getAllNextStates() {
-		// TODO Auto-generated method stub
-		return null;
+		List<State> states = new ArrayList<>();
+
+		if (getVictoryState() != VictoryState.UNDECIDED)
+			return states;
+
+		int piece = nextTurn() == PlayerTurn.PLAYER1 ? PLAYER1 : PLAYER2;
+
+		for (int c = 0; c < colSize(); c++) {
+			for (int r = 0; r < rowSize(); r++) {
+				if (getCellState(r, c) == CellState.EMPTY
+						&& ((r == rowSize() - 1) || getCellState(r + 1, c) != CellState.EMPTY)) {
+					int[][] newState = getCopyOfState();
+					newState[r][c] = piece;
+					states.add(new Connect4State(getEncodedState(newState)));
+				}
+			}
+		}
+
+		return states;
 	}
 
 	@Override
 	public State getNextState(int row, int col) {
-		// TODO Auto-generated method stub
+		for (int r = 0; r < rowSize(); r++) {
+			if (getCellState(r, col) == CellState.EMPTY
+					&& ((r == rowSize() - 1) || getCellState(r + 1, col) != CellState.EMPTY)) {
+				List<State> nextStates = getAllNextStates();
+				for (State state : nextStates) {
+					if (state.getCellState(r, col) != CellState.EMPTY)
+						return state;
+				}
+			}
+		}
 		return null;
 	}
 
